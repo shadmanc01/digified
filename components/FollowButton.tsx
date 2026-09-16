@@ -1,0 +1,1 @@
+"use client";import {useState} from 'react';export default function FollowButton(){const [following,setFollowing]=useState(false);return <button className={following?'secondary':'follow'} onClick={()=>setFollowing(!following)}>{following?'Following':'Follow'}</button>}

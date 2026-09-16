@@ -1,0 +1,50 @@
+.field input:focus,
+.field textarea:focus,
+.field select:focus {
+  outline: 2px solid #1677e8;
+  outline-offset: 1px;
+  border-color: #1677e8;
+}
+
+.fieldHint {
+  display: block;
+  color: #6b6b6b;
+  margin-top: 6px;
+}
+
+.formMessage {
+  padding: 12px 14px;
+  margin: 0 0 18px;
+  border-radius: 7px;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.formError {
+  color: #8f1616;
+  background: #fff1f1;
+  border: 1px solid #efb4b4;
+}
+
+.formSuccess {
+  color: #176230;
+  background: #effaf2;
+  border: 1px solid #a9dfb7;
+}
+
+.primary:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.navTextButton {
+  border: 0;
+  padding: 0;
+  color: #3a3a3a;
+  background: transparent;
+  font-size: 14px;
+}
+
+.navTextButton:hover {
+  color: #000;
+}

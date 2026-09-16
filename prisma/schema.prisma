@@ -1,135 +1,371 @@
-generator client { provider = "prisma-client-js" }
-datasource db { provider = "postgresql" url = env("DATABASE_URL") }
+generator client {
+  provider = "prisma-client-js"
+}
 
-enum Visibility { PUBLIC PRIVATE }
-enum NotificationType { FOLLOW LIKE COMMENT COMMENT_REPLY REPOST SAVE MESSAGE }
-enum ModerationStatus { ACTIVE HIDDEN FLAGGED REMOVED }
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Visibility {
+  PUBLIC
+  PRIVATE
+}
+
+enum NotificationType {
+  FOLLOW
+  LIKE
+  COMMENT
+  COMMENT_REPLY
+  REPOST
+  SAVE
+  MESSAGE
+}
+
+enum ModerationStatus {
+  ACTIVE
+  HIDDEN
+  FLAGGED
+  REMOVED
+}
 
 model User {
-  id String @id @default(cuid())
-  email String @unique
-  username String @unique
-  passwordHash String?
-  createdAt DateTime @default(now())
-  profile Profile?
-  posts Post[]
-  cameras UserCamera[]
-  lenses UserLens[]
-  likes Like[]
-  comments Comment[]
-  savedPosts SavedPost[]
-  savedRecipes SavedRecipe[]
-  followers Follow[] @relation("followers")
-  following Follow[] @relation("following")
-  reposts Repost[]
-  collections Collection[]
-  memberships ConversationMember[]
-  messages Message[]
-  notifications Notification[] @relation("notificationOwner")
-  notificationActors Notification[] @relation("notificationActor")
+  id                 String               @id @default(cuid())
+  authId             String?              @unique
+  email              String               @unique
+  username           String               @unique
+  passwordHash       String?
+  createdAt          DateTime             @default(now())
+  profile            Profile?
+  posts              Post[]
+  cameras            UserCamera[]
+  lenses             UserLens[]
+  likes              Like[]
+  comments           Comment[]
+  savedPosts         SavedPost[]
+  savedRecipes       SavedRecipe[]
+  followers          Follow[]             @relation("followers")
+  following          Follow[]             @relation("following")
+  reposts            Repost[]
+  collections        Collection[]
+  memberships        ConversationMember[]
+  messages           Message[]
+  notifications      Notification[]       @relation("notificationOwner")
+  notificationActors Notification[]       @relation("notificationActor")
 }
 
 model Profile {
-  id String @id @default(cuid())
-  userId String @unique
-  user User @relation(fields:[userId], references:[id], onDelete:Cascade)
+  id          String  @id @default(cuid())
+  userId      String  @unique
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   displayName String
-  bio String?
-  avatarUrl String?
-  location String?
-  website String?
+  bio         String?
+  avatarUrl   String?
+  location    String?
+  website     String?
   socialLinks Json?
 }
 
-model CameraManufacturer { id String @id @default(cuid()) name String @unique cameras Camera[] }
-model Camera {
-  id String @id @default(cuid())
-  manufacturerId String
-  manufacturer CameraManufacturer @relation(fields:[manufacturerId], references:[id])
-  name String
-  slug String @unique
-  canonicalKey String @unique
-  aliases String[]
-  description String?
-  imageUrl String?
-  users UserCamera[]
-  metadata PostCameraMetadata[]
-  @@index([name])
+model CameraManufacturer {
+  id      String   @id @default(cuid())
+  name    String   @unique
+  cameras Camera[]
 }
-model UserCamera { userId String cameraId String user User @relation(fields:[userId], references:[id], onDelete:Cascade) camera Camera @relation(fields:[cameraId], references:[id], onDelete:Cascade) @@id([userId,cameraId]) }
 
-model LensManufacturer { id String @id @default(cuid()) name String @unique lenses Lens[] }
-model Lens {
-  id String @id @default(cuid())
+model Camera {
+  id             String               @id @default(cuid())
   manufacturerId String
-  manufacturer LensManufacturer @relation(fields:[manufacturerId], references:[id])
-  name String
-  slug String @unique
-  canonicalKey String @unique
-  aliases String[]
-  users UserLens[]
-  metadata PostCameraMetadata[]
+  manufacturer   CameraManufacturer   @relation(fields: [manufacturerId], references: [id])
+  name           String
+  slug           String               @unique
+  canonicalKey   String               @unique
+  aliases        String[]
+  description    String?
+  imageUrl       String?
+  users          UserCamera[]
+  metadata       PostCameraMetadata[]
+
   @@index([name])
 }
-model UserLens { userId String lensId String user User @relation(fields:[userId], references:[id], onDelete:Cascade) lens Lens @relation(fields:[lensId], references:[id], onDelete:Cascade) @@id([userId,lensId]) }
+
+model UserCamera {
+  userId   String
+  cameraId String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  camera   Camera @relation(fields: [cameraId], references: [id], onDelete: Cascade)
+
+  @@id([userId, cameraId])
+}
+
+model LensManufacturer {
+  id     String @id @default(cuid())
+  name   String @unique
+  lenses Lens[]
+}
+
+model Lens {
+  id             String               @id @default(cuid())
+  manufacturerId String
+  manufacturer   LensManufacturer     @relation(fields: [manufacturerId], references: [id])
+  name           String
+  slug           String               @unique
+  canonicalKey   String               @unique
+  aliases        String[]
+  users          UserLens[]
+  metadata       PostCameraMetadata[]
+
+  @@index([name])
+}
+
+model UserLens {
+  userId String
+  lensId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lens   Lens   @relation(fields: [lensId], references: [id], onDelete: Cascade)
+
+  @@id([userId, lensId])
+}
 
 model Post {
-  id String @id @default(cuid())
-  userId String
-  user User @relation(fields:[userId], references:[id], onDelete:Cascade)
-  caption String?
-  locationText String?
-  visibility Visibility @default(PUBLIC)
-  moderationStatus ModerationStatus @default(ACTIVE)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  images PostImage[]
-  cameraMetadata PostCameraMetadata?
-  recipe Recipe?
-  categories PostCategory[]
-  hashtags PostHashtag[]
-  likes Like[]
-  comments Comment[]
-  saves SavedPost[]
-  reposts Repost[]
-  collectionPosts CollectionPost[]
-  messages Message[]
-  @@index([userId,createdAt])
-  @@index([visibility,createdAt])
+  id               String              @id @default(cuid())
+  userId           String
+  user             User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  caption          String?
+  locationText     String?
+  visibility       Visibility          @default(PUBLIC)
+  moderationStatus ModerationStatus    @default(ACTIVE)
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  images           PostImage[]
+  cameraMetadata   PostCameraMetadata?
+  recipe           Recipe?
+  categories       PostCategory[]
+  hashtags         PostHashtag[]
+  likes            Like[]
+  comments         Comment[]
+  saves            SavedPost[]
+  reposts          Repost[]
+  collectionPosts  CollectionPost[]
+  messages         Message[]
+
+  @@index([userId, createdAt])
+  @@index([visibility, createdAt])
 }
-model PostImage { id String @id @default(cuid()) postId String post Post @relation(fields:[postId], references:[id], onDelete:Cascade) url String thumbnailUrl String? width Int? height Int? altText String? position Int @default(0) exif Json? @@index([postId,position]) }
+
+model PostImage {
+  id           String  @id @default(cuid())
+  postId       String
+  post         Post    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  url          String
+  thumbnailUrl String?
+  width        Int?
+  height       Int?
+  altText      String?
+  position     Int     @default(0)
+  exif         Json?
+
+  @@index([postId, position])
+}
+
 model PostCameraMetadata {
-  id String @id @default(cuid())
-  postId String @unique
-  post Post @relation(fields:[postId], references:[id], onDelete:Cascade)
-  cameraId String?
-  camera Camera? @relation(fields:[cameraId], references:[id])
-  lensId String?
-  lens Lens? @relation(fields:[lensId], references:[id])
-  focalLength Float?
-  aperture Float?
-  iso Int?
+  id           String    @id @default(cuid())
+  postId       String    @unique
+  post         Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  cameraId     String?
+  camera       Camera?   @relation(fields: [cameraId], references: [id])
+  lensId       String?
+  lens         Lens?     @relation(fields: [lensId], references: [id])
+  focalLength  Float?
+  aperture     Float?
+  iso          Int?
   shutterSpeed String?
-  takenAt DateTime?
-  exifRaw Json?
+  takenAt      DateTime?
+  exifRaw      Json?
+
   @@index([cameraId])
   @@index([lensId])
 }
-model Recipe { id String @id @default(cuid()) postId String @unique post Post @relation(fields:[postId], references:[id], onDelete:Cascade) name String? filmSimulation String? editingSoftware String? notes String? fields RecipeField[] savedBy SavedRecipe[] }
-model RecipeField { id String @id @default(cuid()) recipeId String recipe Recipe @relation(fields:[recipeId], references:[id], onDelete:Cascade) key String value String position Int @default(0) }
-model Category { id String @id @default(cuid()) name String @unique slug String @unique posts PostCategory[] }
-model PostCategory { postId String categoryId String post Post @relation(fields:[postId], references:[id], onDelete:Cascade) category Category @relation(fields:[categoryId], references:[id], onDelete:Cascade) @@id([postId,categoryId]) @@index([categoryId]) }
-model Hashtag { id String @id @default(cuid()) tag String @unique posts PostHashtag[] }
-model PostHashtag { postId String hashtagId String post Post @relation(fields:[postId], references:[id], onDelete:Cascade) hashtag Hashtag @relation(fields:[hashtagId], references:[id], onDelete:Cascade) @@id([postId,hashtagId]) }
-model Follow { followerId String followingId String createdAt DateTime @default(now()) follower User @relation("following",fields:[followerId],references:[id],onDelete:Cascade) following User @relation("followers",fields:[followingId],references:[id],onDelete:Cascade) @@id([followerId,followingId]) @@index([followingId]) }
-model Like { userId String postId String createdAt DateTime @default(now()) user User @relation(fields:[userId],references:[id],onDelete:Cascade) post Post @relation(fields:[postId],references:[id],onDelete:Cascade) @@id([userId,postId]) @@index([postId]) }
-model Comment { id String @id @default(cuid()) userId String postId String parentId String? body String createdAt DateTime @default(now()) moderationStatus ModerationStatus @default(ACTIVE) user User @relation(fields:[userId],references:[id],onDelete:Cascade) post Post @relation(fields:[postId],references:[id],onDelete:Cascade) parent Comment? @relation("thread",fields:[parentId],references:[id]) replies Comment[] @relation("thread") @@index([postId,createdAt]) }
-model SavedPost { userId String postId String createdAt DateTime @default(now()) user User @relation(fields:[userId],references:[id],onDelete:Cascade) post Post @relation(fields:[postId],references:[id],onDelete:Cascade) @@id([userId,postId]) }
-model SavedRecipe { userId String recipeId String createdAt DateTime @default(now()) user User @relation(fields:[userId],references:[id],onDelete:Cascade) recipe Recipe @relation(fields:[recipeId],references:[id],onDelete:Cascade) @@id([userId,recipeId]) }
-model Repost { userId String postId String createdAt DateTime @default(now()) user User @relation(fields:[userId],references:[id],onDelete:Cascade) post Post @relation(fields:[postId],references:[id],onDelete:Cascade) @@id([userId,postId]) }
-model Collection { id String @id @default(cuid()) userId String user User @relation(fields:[userId],references:[id],onDelete:Cascade) name String isPublic Boolean @default(false) posts CollectionPost[] }
-model CollectionPost { collectionId String postId String collection Collection @relation(fields:[collectionId],references:[id],onDelete:Cascade) post Post @relation(fields:[postId],references:[id],onDelete:Cascade) @@id([collectionId,postId]) }
-model Conversation { id String @id @default(cuid()) createdAt DateTime @default(now()) members ConversationMember[] messages Message[] }
-model ConversationMember { conversationId String userId String lastReadAt DateTime? conversation Conversation @relation(fields:[conversationId],references:[id],onDelete:Cascade) user User @relation(fields:[userId],references:[id],onDelete:Cascade) @@id([conversationId,userId]) }
-model Message { id String @id @default(cuid()) conversationId String userId String body String? sharedPostId String? createdAt DateTime @default(now()) conversation Conversation @relation(fields:[conversationId],references:[id],onDelete:Cascade) user User @relation(fields:[userId],references:[id],onDelete:Cascade) sharedPost Post? @relation(fields:[sharedPostId],references:[id]) @@index([conversationId,createdAt]) }
-model Notification { id String @id @default(cuid()) userId String actorId String? type NotificationType entityId String? readAt DateTime? createdAt DateTime @default(now()) user User @relation("notificationOwner",fields:[userId],references:[id],onDelete:Cascade) actor User? @relation("notificationActor",fields:[actorId],references:[id],onDelete:SetNull) @@index([userId,createdAt]) }
+
+model Recipe {
+  id              String        @id @default(cuid())
+  postId          String        @unique
+  post            Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  name            String?
+  filmSimulation  String?
+  editingSoftware String?
+  notes           String?
+  fields          RecipeField[]
+  savedBy         SavedRecipe[]
+}
+
+model RecipeField {
+  id       String @id @default(cuid())
+  recipeId String
+  recipe   Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  key      String
+  value    String
+  position Int    @default(0)
+}
+
+model Category {
+  id    String         @id @default(cuid())
+  name  String         @unique
+  slug  String         @unique
+  posts PostCategory[]
+}
+
+model PostCategory {
+  postId     String
+  categoryId String
+  post       Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([postId, categoryId])
+  @@index([categoryId])
+}
+
+model Hashtag {
+  id    String        @id @default(cuid())
+  tag   String        @unique
+  posts PostHashtag[]
+}
+
+model PostHashtag {
+  postId    String
+  hashtagId String
+  post      Post    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  hashtag   Hashtag @relation(fields: [hashtagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, hashtagId])
+}
+
+model Follow {
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+  follower    User     @relation("following", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("followers", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@id([followerId, followingId])
+  @@index([followingId])
+}
+
+model Like {
+  userId    String
+  postId    String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@id([userId, postId])
+  @@index([postId])
+}
+
+model Comment {
+  id               String           @id @default(cuid())
+  userId           String
+  postId           String
+  parentId         String?
+  body             String
+  createdAt        DateTime         @default(now())
+  moderationStatus ModerationStatus @default(ACTIVE)
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post             Post             @relation(fields: [postId], references: [id], onDelete: Cascade)
+  parent           Comment?         @relation("thread", fields: [parentId], references: [id])
+  replies          Comment[]        @relation("thread")
+
+  @@index([postId, createdAt])
+}
+
+model SavedPost {
+  userId    String
+  postId    String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@id([userId, postId])
+}
+
+model SavedRecipe {
+  userId    String
+  recipeId  String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@id([userId, recipeId])
+}
+
+model Repost {
+  userId    String
+  postId    String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@id([userId, postId])
+}
+
+model Collection {
+  id       String           @id @default(cuid())
+  userId   String
+  user     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name     String
+  isPublic Boolean          @default(false)
+  posts    CollectionPost[]
+}
+
+model CollectionPost {
+  collectionId String
+  postId       String
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  post         Post       @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@id([collectionId, postId])
+}
+
+model Conversation {
+  id        String               @id @default(cuid())
+  createdAt DateTime             @default(now())
+  members   ConversationMember[]
+  messages  Message[]
+}
+
+model ConversationMember {
+  conversationId String
+  userId         String
+  lastReadAt     DateTime?
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([conversationId, userId])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  userId         String
+  body           String?
+  sharedPostId   String?
+  createdAt      DateTime     @default(now())
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sharedPost     Post?        @relation(fields: [sharedPostId], references: [id])
+
+  @@index([conversationId, createdAt])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  actorId   String?
+  type      NotificationType
+  entityId  String?
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+  user      User             @relation("notificationOwner", fields: [userId], references: [id], onDelete: Cascade)
+  actor     User?            @relation("notificationActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+}

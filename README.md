@@ -23,10 +23,24 @@ A responsive photography-first social network for digital-camera users.
 
 ```bash
 npm install
+cp .env.example .env.local
 npm run dev
 ```
 
 Open http://localhost:3000.
+
+## Authentication setup
+
+Create a Supabase project, then copy its project URL and publishable/anonymous key into `.env.local` as `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+
+In Supabase Authentication → URL Configuration, set the Site URL to your app URL and add these redirect URLs:
+
+```text
+http://localhost:3000/auth/callback
+https://YOUR_PRODUCTION_DOMAIN/auth/callback
+```
+
+Signup now creates a real Supabase Auth user. When email confirmation is disabled, the user receives a session and is redirected to `/following`. When confirmation is enabled, the user is told to confirm their email; the callback exchanges the confirmation code for a session and redirects to `/following`.
 
 ## Production wiring still required
 
@@ -34,8 +48,7 @@ The UI and data architecture are implemented, while authentication, durable data
 
 ## Suggested next implementation pass
 
-1. Add Auth.js or Supabase Auth.
-2. Instantiate Prisma and replace `lib/data.ts` seed reads with server queries.
+1. Instantiate Prisma and replace `lib/data.ts` seed reads with server queries.
 3. Add signed uploads to S3/R2 and Sharp image variants.
 4. Parse EXIF before processing/metadata stripping and normalize camera/lens aliases.
 5. Add authenticated server actions/API routes for social interactions.

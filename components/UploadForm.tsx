@@ -9,12 +9,26 @@ export default function UploadForm() {
   const router = useRouter();
   const [files,setFiles] = useState<File[]>([]); const [previews,setPreviews] = useState<string[]>([]);
   const [busy,setBusy] = useState(false); const [error,setError] = useState("");
-  function pick(e:ChangeEvent<HTMLInputElement>){const next=[...(e.target.files||[])].slice(0,10);setFiles(next);setPreviews(next.map(URL.createObjectURL));}
+  function pick(e:ChangeEvent<HTMLInputElement>){
+    const selected=[...(e.target.files||[])].slice(0,10);
+    const tooLarge=selected.find(file=>file.size>25*1024*1024);
+    if(tooLarge){setError(`${tooLarge.name} is larger than 25 MB.`);setFiles([]);setPreviews([]);return;}
+    setError("");setFiles(selected);setPreviews(selected.map(URL.createObjectURL));
+  }
   async function submit(e:FormEvent<HTMLFormElement>){
     e.preventDefault(); setError(""); if(!files.length){setError("Choose at least one image.");return;} setBusy(true);
     const f=new FormData(e.currentTarget); const supabase=createBrowserSupabaseClient();
     try {
       const {data:{user}}=await supabase.auth.getUser(); if(!user) throw new Error("Sign in before publishing.");
+      const username=String(user.user_metadata.username||user.email?.split("@")[0]||`user-${user.id.slice(0,8)}`).toLowerCase();
+      const displayName=String(user.user_metadata.display_name||username);
+      const {error:profileError}=await supabase.from("profiles").upsert({
+        id:user.id,username,display_name:displayName,
+        bio:user.user_metadata.bio||null,avatar_url:user.user_metadata.avatar_url||null,
+        location:user.user_metadata.location||null,website:user.user_metadata.website||null,
+        updated_at:new Date().toISOString(),
+      });
+      if(profileError)throw new Error(profileError.code==="42P01"?"The Supabase database setup is incomplete. Run 001_profiles.sql and 002_complete_mvp.sql in the SQL Editor.":`Profile setup failed: ${profileError.message}`);
       const cameraName=String(f.get("camera")||"").trim(), lensName=String(f.get("lens")||"").trim();
       let cameraId:null|string=null,lensId:null|string=null;
       if(cameraName){const {data,error}=await supabase.from("cameras").upsert({name:cameraName,slug:slugify(cameraName),manufacturer:cameraName.split(" ")[0]},{onConflict:"slug"}).select("id").single();if(error)throw error;cameraId=data.id;}
@@ -29,7 +43,7 @@ export default function UploadForm() {
         const recipeName=String(f.get("recipeName")||"").trim();if(recipeName||f.get("filmSimulation")||f.get("recipeNotes")){await supabase.from("recipes").insert({post_id:post.id,name:recipeName||null,film_simulation:String(f.get("filmSimulation")||"")||null,notes:String(f.get("recipeNotes")||"")||null,fields:{white_balance:String(f.get("whiteBalance")||"")}});}
       } catch(inner){await Promise.all(uploaded.map(path=>supabase.storage.from("photos").remove([path])));await supabase.from("posts").delete().eq("id",post.id);throw inner;}
       router.push(`/photo/${post.id}`);router.refresh();
-    } catch(caught){setError(caught instanceof Error?caught.message:"Upload failed.");setBusy(false);}
+    } catch(caught){setError(readError(caught));setBusy(false);}
   }
   return <form className="formCard wideForm" onSubmit={submit}>
     {error&&<div className="formMessage formError" role="alert">{error}</div>}
@@ -50,4 +64,5 @@ export default function UploadForm() {
   </form>;
 }
 function Field({name,label,...props}:{name:string;label:string;[key:string]:any}){return <div className="field"><label htmlFor={name}>{label}</label><input id={name} name={name} {...props}/></div>}
-function dimensions(file:File){return new Promise<{width:number;height:number}>((resolve,reject)=>{const img=new Image();img.onload=()=>{URL.revokeObjectURL(img.src);resolve({width:img.naturalWidth,height:img.naturalHeight})};img.onerror=reject;img.src=URL.createObjectURL(file);});}
+function dimensions(file:File){return new Promise<{width?:number;height?:number}>((resolve)=>{const img=new Image();const src=URL.createObjectURL(file);img.onload=()=>{URL.revokeObjectURL(src);resolve({width:img.naturalWidth,height:img.naturalHeight})};img.onerror=()=>{URL.revokeObjectURL(src);resolve({})};img.src=src;});}
+function readError(value:unknown){if(value instanceof Error)return value.message;if(value&&typeof value==="object"&&"message" in value&&typeof value.message==="string")return value.message;return "Upload failed. Confirm both Supabase migrations ran successfully and try again.";}

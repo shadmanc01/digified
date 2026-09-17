@@ -20,6 +20,7 @@ export default async function Settings() {
           bio: String(user.user_metadata.bio || ""),
           location: String(user.user_metadata.location || ""),
           website: String(user.user_metadata.website || ""),
+          avatarUrl: String(user.user_metadata.avatar_url || ""),
         }}
       />
     </main>

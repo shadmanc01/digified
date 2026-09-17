@@ -1,5 +1,39 @@
 # digified
 
+A Supabase-backed photography community built with Next.js 15, React 19 and TypeScript.
+
+## One-time Supabase setup
+
+1. Create a Supabase project.
+2. Open **SQL Editor**, paste and run `supabase/migrations/001_profiles.sql`.
+3. Paste and run `supabase/migrations/002_complete_mvp.sql`.
+4. In **Authentication → URL Configuration**, set the Site URL to `http://localhost:3000` for local development and add your production URL when deployed.
+5. Copy `.env.example` to `.env.local`, then add the Project URL and publishable key from **Project Settings → API**.
+
+The second migration creates all MVP tables, indexes, Row Level Security policies, notification triggers, account deletion function, and the private `photos` plus public `avatars` Storage buckets.
+
+## Run locally
+
+```bash
+npm install
+npm run dev
+```
+
+Open `http://localhost:3000`. Use `npm run build` before deployment.
+
+## Implemented flows
+
+- Supabase email/password registration, sign-in, sessions, sign-out and profile creation
+- Profile editing, avatar upload, password change and account deletion
+- Single-image and carousel uploads with camera, lens, settings, category, hashtags, recipe and public/private visibility
+- Public discovery, following feed, profiles, camera/lens/category pages and global search
+- Persistent follows, likes, comments, saves, recipe saves, reposts, collections and share links
+- Gear ownership and calculated most-used camera
+- One-to-one conversations, unread state, notifications and activity history
+- Post/comment deletion, user blocking, reporting, privacy and database/storage security policies
+
+Seed imagery remains as an empty-database discovery preview. As soon as real public posts exist, core discovery pages prefer Supabase data.
+
 A responsive photography-first social network for digital-camera users.
 
 ## Implemented in this MVP scaffold

@@ -13,6 +13,11 @@ export type Photo = {
   likes: number;
   saves: number;
   aspect: 'portrait'|'landscape'|'square';
+  ownerId?: string;
+  visibility?: 'public'|'private';
+  recipeId?: string;
+  createdAt?: string;
+  images?: { src: string; alt: string; width?: number; height?: number }[];
 };
 
 export const categories = ['Street','Portrait','Landscape','Wildlife','Travel','Architecture','Automotive','Sports','Night','Nature','Documentary','Macro','Food','Fashion','Events','Still Life','Astrophotography','Black & White','Urban','Abstract'];

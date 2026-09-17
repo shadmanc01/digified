@@ -22,9 +22,17 @@ function LoginForm() {
 
     try {
       const supabase = createBrowserSupabaseClient();
-      const { error: loginError } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error: loginError } = await supabase.auth.signInWithPassword({ email, password });
       if (loginError) throw loginError;
-      router.replace("/following");
+      const username = typeof data.user?.user_metadata.username === "string" ? data.user.user_metadata.username : "";
+      if (data.user && username) {
+        await supabase.from("profiles").upsert({
+          id: data.user.id,
+          username,
+          display_name: String(data.user.user_metadata.display_name || username),
+        });
+      }
+      router.replace(username ? "/" + username : "/settings");
       router.refresh();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "We couldn't sign you in. Please try again.");

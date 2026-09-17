@@ -40,7 +40,11 @@ http://localhost:3000/auth/callback
 https://YOUR_PRODUCTION_DOMAIN/auth/callback
 ```
 
-Signup now creates a real Supabase Auth user. When email confirmation is disabled, the user receives a session and is redirected to `/following`. When confirmation is enabled, the user is told to confirm their email; the callback exchanges the confirmation code for a session and redirects to `/following`.
+Signup now creates a real Supabase Auth user. When email confirmation is disabled, the user receives a session and is redirected to their own profile. When confirmation is enabled, the callback exchanges the confirmation code for a session and redirects to that profile.
+
+### Create persistent public profiles
+
+Open the Supabase SQL Editor, paste the contents of `supabase/migrations/001_profiles.sql`, and click **Run**. This creates the public profile table, ownership policies, a new-user trigger, and a one-time backfill for accounts created before the migration.
 
 ## Production wiring still required
 

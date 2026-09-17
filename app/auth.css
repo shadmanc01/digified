@@ -48,3 +48,27 @@
 .navTextButton:hover {
   color: #000;
 }
+
+.profileBio {
+  max-width: 680px;
+  margin: 10px 0 0;
+  line-height: 1.5;
+}
+
+.profileAvatarImage {
+  object-fit: cover;
+}
+
+/* Preserve every photograph's intrinsic proportions in all gallery views. */
+.photoCard img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  aspect-ratio: auto;
+}
+
+.detailImage img {
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}

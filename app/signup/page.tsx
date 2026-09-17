@@ -41,7 +41,14 @@ export default function Signup() {
       if (signupError) throw signupError;
 
       if (data.session) {
-        router.replace("/following");
+        if (data.user) {
+          await supabase.from("profiles").upsert({
+            id: data.user.id,
+            username,
+            display_name: displayName,
+          });
+        }
+        router.replace("/" + username);
         router.refresh();
         return;
       }
